@@ -223,6 +223,7 @@ const elements = {
   importButton: $("importButton"),
   importFile: $("importFile"),
   resetButton: $("resetButton"),
+  headerHomeButton: $("headerHomeButton"),
   navHome: $("navHome"),
   navSettings: $("navSettings"),
   rowActionPopover: $("rowActionPopover"),
@@ -257,6 +258,8 @@ function bindEvents() {
   document.querySelectorAll("[data-view]").forEach((button) => {
     button.addEventListener("click", () => setView(button.dataset.view));
   });
+
+  elements.headerHomeButton.addEventListener("click", () => setView("home"));
 
   document.querySelectorAll("[data-theme-option]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -339,6 +342,8 @@ function renderStaticText() {
   document.title = t.documentTitle;
   elements.screenTitle.textContent = isSettings ? t.settingsTitle : t.reportTitle;
   elements.screenSubtitle.textContent = isSettings ? t.settingsSubtitle : t.reportSubtitle;
+  elements.headerHomeButton.setAttribute("aria-label", t.home);
+  elements.headerHomeButton.title = t.home;
   elements.themeToggle.querySelector("span").textContent = state.prefs.theme === "dark" ? t.light : t.dark;
   elements.themeToggle.querySelector("use").setAttribute("href", state.prefs.theme === "dark" ? "#icon-sun" : "#icon-moon");
   elements.languageToggle.querySelector("span").textContent = t.languageButton;

@@ -10,6 +10,10 @@
   --faint: #748196;
   --line: rgba(132, 155, 184, .22);
   --line-strong: rgba(148, 163, 184, .36);
+  --table-line: rgba(155, 174, 199, .34);
+  --table-line-strong: rgba(177, 194, 216, .46);
+  --table-fill: rgba(255, 255, 255, .028);
+  --table-head-fill: rgba(255, 255, 255, .065);
   --shadow: 0 18px 48px rgba(0, 0, 0, .24);
   --orange: #ff7a18;
   --orange-soft: rgba(255, 122, 24, .15);
@@ -36,6 +40,10 @@
   --faint: #7a8798;
   --line: rgba(31, 42, 57, .12);
   --line-strong: rgba(31, 42, 57, .20);
+  --table-line: rgba(31, 42, 57, .20);
+  --table-line-strong: rgba(31, 42, 57, .30);
+  --table-fill: rgba(255, 255, 255, .58);
+  --table-head-fill: rgba(15, 23, 42, .035);
   --shadow: 0 18px 44px rgba(28, 40, 58, .12);
 }
 
@@ -123,9 +131,26 @@ svg {
   place-items: center;
   border: 2px solid var(--orange);
   border-radius: 14px;
+  padding: 0;
   color: var(--orange);
   background: rgba(255, 122, 24, .08);
   box-shadow: 0 0 20px rgba(255, 122, 24, .22);
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.brand-icon:hover {
+  background: rgba(255, 122, 24, .13);
+  box-shadow: 0 0 0 4px rgba(255, 122, 24, .08), 0 0 24px rgba(255, 122, 24, .26);
+}
+
+.brand-icon:active {
+  transform: translateY(1px);
+}
+
+.brand-icon:focus-visible {
+  outline: 3px solid rgba(255, 122, 24, .30);
+  outline-offset: 3px;
 }
 
 .brand-icon svg {
@@ -417,7 +442,7 @@ h1 {
   gap: 10px;
   align-items: center;
   padding: 12px 14px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--table-line-strong);
 }
 
 .ledger-title {
@@ -482,8 +507,10 @@ h1 {
 .table-head {
   min-height: 36px;
   margin-top: 10px;
+  border: 1px solid var(--table-line-strong);
+  border-bottom: 0;
   border-radius: var(--radius) var(--radius) 0 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .015));
+  background: linear-gradient(180deg, var(--table-head-fill), rgba(255, 255, 255, .012));
   font-size: .76rem;
   font-weight: 820;
 }
@@ -491,7 +518,7 @@ h1 {
 .table-head > div,
 .record-row > div {
   min-width: 0;
-  border-right: 1px solid var(--line);
+  border-right: 1px solid var(--table-line);
 }
 
 .table-head > div:last-child,
@@ -508,14 +535,15 @@ h1 {
 
 .row-list {
   overflow: hidden;
-  border: 1px solid var(--line);
+  border: 1px solid var(--table-line-strong);
   border-top: 0;
   border-radius: 0 0 var(--radius) var(--radius);
+  background: var(--table-fill);
 }
 
 .record-row {
   min-height: 42px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--table-line);
 }
 
 .record-row:first-child {
@@ -617,7 +645,7 @@ h1 {
   align-items: center;
   gap: 9px;
   border: 0;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--table-line);
   background: transparent;
   padding: 0 14px 0 34px;
   color: currentColor;
