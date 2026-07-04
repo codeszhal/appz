@@ -1,5 +1,6 @@
 const STORAGE_KEY = "currency_total_state_v1";
 const LONG_PRESS_MS = 620;
+const HISTORY_LIMIT = 80;
 
 const CURRENCIES = [
   {
@@ -54,7 +55,9 @@ const TEXT = {
     documentTitle: "Currency Total",
     reportTitle: "Report",
     settingsTitle: "Settings",
+    historyTitle: "History",
     reportSubtitle: "Preview, save, and manage your records",
+    historySubtitle: "View and manage your saved reports",
     settingsSubtitle: "Preferences and local data",
     light: "Light",
     dark: "Dark",
@@ -64,6 +67,8 @@ const TEXT = {
     reportSavedTitle: "Report image saved",
     reportSavedCopy: "Last image saved {time}.",
     saveImage: "Save Image",
+    saveSnapshot: "Save Snapshot",
+    snapshotSaved: "Snapshot saved",
     imageSaved: "Image saved",
     imageFailed: "Could not save image",
     summary: "Summary",
@@ -123,15 +128,43 @@ const TEXT = {
     resetDone: "Local data reset",
     savedPaused: "Auto-save off",
     home: "Home",
+    history: "History",
     settings: "Settings",
     reportDate: "Report date",
-    total: "Total"
+    total: "Total",
+    totalReports: "Total Reports",
+    thisWeek: "This Week",
+    historyLastSaved: "Last Saved",
+    searchReports: "Search report name...",
+    allStatus: "All status",
+    statusSaved: "Saved",
+    statusTelegram: "Sent to Telegram",
+    statusImage: "Saved Image",
+    statusDraft: "Draft",
+    latest: "Latest",
+    oldest: "Oldest",
+    highestIdr: "Highest IDR",
+    noHistory: "No saved report snapshots yet.",
+    noHistoryMatch: "No reports match your filters.",
+    historyPreviewEmpty: "Select a report to preview it.",
+    preview: "Preview",
+    duplicate: "Duplicate",
+    restore: "Restore",
+    delete: "Delete",
+    restoreConfirm: "Restore this report into the current tables?",
+    deleteHistoryConfirm: "Delete this report snapshot?",
+    restored: "Report restored",
+    duplicated: "Report duplicated",
+    historyDeleted: "Report deleted",
+    reportName: "Daily Report"
   },
   zh: {
     documentTitle: "多币种记录",
     reportTitle: "报表",
     settingsTitle: "设置",
+    historyTitle: "历史",
     reportSubtitle: "预览、保存并管理你的记录",
+    historySubtitle: "查看和管理已保存的报表",
     settingsSubtitle: "偏好设置与本地数据",
     light: "浅色",
     dark: "深色",
@@ -141,6 +174,8 @@ const TEXT = {
     reportSavedTitle: "报表图片已保存",
     reportSavedCopy: "上次保存于 {time}。",
     saveImage: "保存图片",
+    saveSnapshot: "保存快照",
+    snapshotSaved: "快照已保存",
     imageSaved: "图片已保存",
     imageFailed: "无法保存图片",
     summary: "汇总",
@@ -200,9 +235,35 @@ const TEXT = {
     resetDone: "本地数据已重置",
     savedPaused: "自动保存已关闭",
     home: "首页",
+    history: "历史",
     settings: "设置",
     reportDate: "报表日期",
-    total: "合计"
+    total: "合计",
+    totalReports: "报表总数",
+    thisWeek: "本周",
+    historyLastSaved: "最近保存",
+    searchReports: "搜索报表名称...",
+    allStatus: "全部状态",
+    statusSaved: "已保存",
+    statusTelegram: "已发送 Telegram",
+    statusImage: "已保存图片",
+    statusDraft: "草稿",
+    latest: "最新",
+    oldest: "最旧",
+    highestIdr: "IDR 最高",
+    noHistory: "还没有保存的报表快照。",
+    noHistoryMatch: "没有符合筛选条件的报表。",
+    historyPreviewEmpty: "选择一份报表查看预览。",
+    preview: "预览",
+    duplicate: "复制",
+    restore: "恢复",
+    delete: "删除",
+    restoreConfirm: "确定要把这份报表恢复到当前表格吗？",
+    deleteHistoryConfirm: "确定要删除这份报表快照吗？",
+    restored: "报表已恢复",
+    duplicated: "报表已复制",
+    historyDeleted: "报表已删除",
+    reportName: "日报表"
   }
 };
 
@@ -211,6 +272,10 @@ let currentView = "home";
 let brushPress = null;
 let pendingDelete = null;
 let toastTimer = null;
+let historyQuery = "";
+let historyStatus = "all";
+let historySort = "latest";
+let selectedHistoryId = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -223,6 +288,8 @@ const elements = {
   reportStatusCopy: $("reportStatusCopy"),
   saveImageButton: $("saveImageButton"),
   saveImageLabel: $("saveImageLabel"),
+  saveSnapshotButton: $("saveSnapshotButton"),
+  saveSnapshotLabel: $("saveSnapshotLabel"),
   summaryTitle: $("summaryTitle"),
   summaryHint: $("summaryHint"),
   summaryGrid: $("summaryGrid"),
@@ -235,6 +302,17 @@ const elements = {
   telegramCopy: $("telegramCopy"),
   settingsTitle: $("settingsTitle"),
   settingsHint: $("settingsHint"),
+  historyTotalReports: $("historyTotalReports"),
+  historyTotalReportsLabel: $("historyTotalReportsLabel"),
+  historyThisWeek: $("historyThisWeek"),
+  historyThisWeekLabel: $("historyThisWeekLabel"),
+  historyLastSaved: $("historyLastSaved"),
+  historyLastSavedLabel: $("historyLastSavedLabel"),
+  historySearch: $("historySearch"),
+  historyStatusFilter: $("historyStatusFilter"),
+  historySort: $("historySort"),
+  historyList: $("historyList"),
+  historyPreview: $("historyPreview"),
   settingThemeTitle: $("settingThemeTitle"),
   settingThemeCopy: $("settingThemeCopy"),
   settingLanguageTitle: $("settingLanguageTitle"),
@@ -275,6 +353,7 @@ const elements = {
   resetButton: $("resetButton"),
   headerHomeButton: $("headerHomeButton"),
   navHome: $("navHome"),
+  navHistory: $("navHistory"),
   navSettings: $("navSettings"),
   rowActionPopover: $("rowActionPopover"),
   deleteRowButton: $("deleteRowButton"),
@@ -367,8 +446,28 @@ function bindEvents() {
     hideRowPopover();
   });
 
+  elements.saveSnapshotButton.addEventListener("click", () => saveHistorySnapshot("saved"));
   elements.saveImageButton.addEventListener("click", saveReportImage);
   elements.telegramButton.addEventListener("click", sendToTelegram);
+  elements.historySearch.addEventListener("input", () => {
+    historyQuery = elements.historySearch.value;
+    renderHistory();
+  });
+  elements.historyStatusFilter.addEventListener("change", () => {
+    historyStatus = elements.historyStatusFilter.value;
+    renderHistory();
+  });
+  elements.historySort.addEventListener("change", () => {
+    historySort = elements.historySort.value;
+    renderHistory();
+  });
+  elements.historyList.addEventListener("click", (event) => {
+    const item = event.target.closest("[data-history-id]");
+    if (!item) return;
+    selectedHistoryId = item.dataset.historyId;
+    renderHistory();
+  });
+  elements.historyPreview.addEventListener("click", handleHistoryPreviewAction);
   elements.exportButton.addEventListener("click", exportData);
   elements.importButton.addEventListener("click", () => elements.importFile.click());
   elements.importFile.addEventListener("change", importData);
@@ -388,6 +487,7 @@ function renderAll() {
   renderStaticText();
   renderSummary();
   renderLedgers();
+  renderHistory();
   renderSettingsControls();
   updateTotals();
   updateSavedStatus();
@@ -396,9 +496,10 @@ function renderAll() {
 function renderStaticText() {
   const t = getText();
   const isSettings = currentView === "settings";
+  const isHistory = currentView === "history";
   document.title = t.documentTitle;
-  elements.screenTitle.textContent = isSettings ? t.settingsTitle : t.reportTitle;
-  elements.screenSubtitle.textContent = isSettings ? t.settingsSubtitle : t.reportSubtitle;
+  elements.screenTitle.textContent = isHistory ? t.historyTitle : isSettings ? t.settingsTitle : t.reportTitle;
+  elements.screenSubtitle.textContent = isHistory ? t.historySubtitle : isSettings ? t.settingsSubtitle : t.reportSubtitle;
   elements.headerHomeButton.setAttribute("aria-label", t.home);
   elements.headerHomeButton.title = t.home;
   elements.themeToggle.querySelector("span").textContent = state.prefs.theme === "dark" ? t.light : t.dark;
@@ -409,6 +510,7 @@ function renderStaticText() {
     ? t.reportSavedCopy.replace("{time}", formatDateTime(state.report.lastImageAt))
     : t.reportEmptyCopy;
   elements.saveImageLabel.textContent = t.saveImage;
+  elements.saveSnapshotLabel.textContent = t.saveSnapshot;
   elements.summaryTitle.textContent = t.summary;
   elements.summaryHint.textContent = t.autoCalculated;
   elements.localNote.textContent = t.localNote;
@@ -446,8 +548,10 @@ function renderStaticText() {
     elements.transferStatus.textContent = t.transferStatusDefault;
   }
   elements.navHome.textContent = t.home;
+  elements.navHistory.textContent = t.history;
   elements.navSettings.textContent = t.settings;
   elements.deleteRowButton.querySelector("span").textContent = t.deleteRow;
+  updateHistoryControlsText();
 }
 
 function renderSummary() {
@@ -531,6 +635,166 @@ function renderSettingsControls() {
   });
   elements.numberFormat.value = state.prefs.numberFormat;
   elements.autoSave.checked = state.prefs.autoSave;
+}
+
+function updateHistoryControlsText() {
+  const t = getText();
+  elements.historyTotalReportsLabel.textContent = t.totalReports;
+  elements.historyThisWeekLabel.textContent = t.thisWeek;
+  elements.historyLastSavedLabel.textContent = t.historyLastSaved;
+  elements.historySearch.placeholder = t.searchReports;
+  setSelectOptionText(elements.historyStatusFilter, {
+    all: t.allStatus,
+    saved: t.statusSaved,
+    telegram: t.statusTelegram,
+    image: t.statusImage,
+    draft: t.statusDraft
+  });
+  setSelectOptionText(elements.historySort, {
+    latest: t.latest,
+    oldest: t.oldest,
+    "highest-idr": t.highestIdr
+  });
+}
+
+function setSelectOptionText(select, labels) {
+  Array.from(select.options).forEach((option) => {
+    if (labels[option.value]) option.textContent = labels[option.value];
+  });
+}
+
+function renderHistory() {
+  updateHistoryControlsText();
+  const snapshots = getFilteredHistory();
+  const allSnapshots = state.history || [];
+  elements.historyTotalReports.textContent = String(allSnapshots.length);
+  elements.historyThisWeek.textContent = String(countHistoryThisWeek(allSnapshots));
+  elements.historyLastSaved.textContent = allSnapshots[0] ? formatShortDateTime(allSnapshots[0].createdAt) : "-";
+  elements.historySearch.value = historyQuery;
+  elements.historyStatusFilter.value = historyStatus;
+  elements.historySort.value = historySort;
+
+  if (!selectedHistoryId || !snapshots.some((item) => item.id === selectedHistoryId)) {
+    selectedHistoryId = snapshots[0]?.id || null;
+  }
+
+  elements.historyList.innerHTML = snapshots.length
+    ? snapshots.map(historyItemTemplate).join("")
+    : `<div class="history-empty">${escapeHtml(allSnapshots.length ? getText().noHistoryMatch : getText().noHistory)}</div>`;
+  renderHistoryPreview();
+}
+
+function getFilteredHistory() {
+  const query = historyQuery.trim().toLowerCase();
+  return [...(state.history || [])]
+    .filter((item) => historyStatus === "all" || item.status === historyStatus)
+    .filter((item) => {
+      if (!query) return true;
+      return `${item.name} ${statusLabel(item.status)} ${formatDateTime(item.createdAt)}`.toLowerCase().includes(query);
+    })
+    .sort((a, b) => {
+      if (historySort === "oldest") return new Date(a.createdAt) - new Date(b.createdAt);
+      if (historySort === "highest-idr") return (b.totals?.idr || 0) - (a.totals?.idr || 0);
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+}
+
+function historyItemTemplate(item) {
+  const active = item.id === selectedHistoryId ? " is-active" : "";
+  return `
+    <button class="history-item${active}" type="button" data-history-id="${escapeAttribute(item.id)}">
+      <span class="history-main">
+        <span>
+          <strong>${escapeHtml(item.name)}</strong>
+          <small>${escapeHtml(formatDateTime(item.createdAt))}</small>
+        </span>
+        <span class="history-badge ${escapeAttribute(item.status)}">${escapeHtml(statusLabel(item.status))}</span>
+      </span>
+      <span class="history-totals">
+        ${CURRENCIES.map((currency) => historyTotalTemplate(currency, item.totals?.[currency.id] || 0)).join("")}
+      </span>
+    </button>
+  `;
+}
+
+function historyTotalTemplate(currency, value) {
+  return `
+    <span class="history-total ${currency.id}">
+      <span class="currency-badge small" style="color: ${currency.color}; background: ${currency.color};"><span>${currency.badge}</span></span>
+      <span>${escapeHtml(formatCurrency(value, currency))}</span>
+    </span>
+  `;
+}
+
+function renderHistoryPreview() {
+  const item = (state.history || []).find((snapshot) => snapshot.id === selectedHistoryId);
+  if (!item) {
+    elements.historyPreview.innerHTML = `<div class="history-preview-empty">${escapeHtml(getText().historyPreviewEmpty)}</div>`;
+    return;
+  }
+  const lang = state.prefs.language;
+  elements.historyPreview.innerHTML = `
+    <header class="preview-header">
+      <div>
+        <h3>${escapeHtml(item.name)}</h3>
+        <p>${escapeHtml(formatDateTime(item.createdAt))}</p>
+      </div>
+      <span class="history-badge ${escapeAttribute(item.status)}">${escapeHtml(statusLabel(item.status))}</span>
+    </header>
+    <section class="preview-summary">
+      ${CURRENCIES.map((currency) => `
+        <article class="preview-total-card">
+          <span class="currency-badge small" style="color: ${currency.color}; background: ${currency.color};"><span>${currency.badge}</span></span>
+          <div>
+            <span>${escapeHtml(currency.names[lang])}</span>
+            <strong class="${currency.id}">${escapeHtml(formatCurrency(item.totals?.[currency.id] || 0, currency))}</strong>
+          </div>
+        </article>
+      `).join("")}
+    </section>
+    <section class="preview-tables">
+      ${CURRENCIES.map((currency) => previewTableTemplate(currency, item)).join("")}
+    </section>
+    <section class="preview-actions">
+      <button type="button" data-history-action="send" data-history-id="${escapeAttribute(item.id)}"><svg aria-hidden="true"><use href="#icon-send"></use></svg><span>${escapeHtml(getText().sendTelegram)}</span></button>
+      <button type="button" data-history-action="duplicate" data-history-id="${escapeAttribute(item.id)}"><svg aria-hidden="true"><use href="#icon-copy"></use></svg><span>${escapeHtml(getText().duplicate)}</span></button>
+      <button type="button" data-history-action="restore" data-history-id="${escapeAttribute(item.id)}"><svg aria-hidden="true"><use href="#icon-download"></use></svg><span>${escapeHtml(getText().restore)}</span></button>
+      <button class="danger-action" type="button" data-history-action="delete" data-history-id="${escapeAttribute(item.id)}"><svg aria-hidden="true"><use href="#icon-trash"></use></svg><span>${escapeHtml(getText().delete)}</span></button>
+    </section>
+  `;
+}
+
+function previewTableTemplate(currency, item) {
+  const rows = item.tables?.[currency.id]?.rows || [];
+  const visibleRows = rows.filter((row) => row.name || row.amount).slice(0, 5);
+  const safeRows = visibleRows.length ? visibleRows : [{ name: "-", amount: "0" }];
+  return `
+    <article class="preview-table" data-currency="${currency.id}">
+      <header style="color: ${currency.color}">
+        <span>${escapeHtml(currency.names[state.prefs.language])}</span>
+        <span>${escapeHtml(formatCurrency(item.totals?.[currency.id] || 0, currency))}</span>
+      </header>
+      ${safeRows.map((row, index) => `
+        <div class="preview-row">
+          <span>${index + 1}</span>
+          <span>${escapeHtml(row.name || "-")}</span>
+          <strong>${escapeHtml(row.amount || "0")}</strong>
+        </div>
+      `).join("")}
+    </article>
+  `;
+}
+
+function handleHistoryPreviewAction(event) {
+  const button = event.target.closest("[data-history-action]");
+  if (!button) return;
+  const item = (state.history || []).find((snapshot) => snapshot.id === button.dataset.historyId);
+  if (!item) return;
+  const action = button.dataset.historyAction;
+  if (action === "send") sendHistoryToTelegram(item);
+  if (action === "duplicate") duplicateHistoryItem(item);
+  if (action === "restore") restoreHistoryItem(item);
+  if (action === "delete") deleteHistoryItem(item);
 }
 
 function handleLedgerInput(event) {
@@ -647,6 +911,82 @@ function deleteRow(currencyId, rowId) {
   showToast(getText().rowDeleted);
 }
 
+function saveHistorySnapshot(status = "saved", options = {}) {
+  const snapshot = createHistorySnapshot(status, options);
+  state.history = [snapshot, ...(state.history || [])].slice(0, HISTORY_LIMIT);
+  selectedHistoryId = snapshot.id;
+  persist(true);
+  renderHistory();
+  showToast(getText().snapshotSaved);
+  return snapshot;
+}
+
+function createHistorySnapshot(status = "saved", options = {}) {
+  const createdAt = options.createdAt || new Date().toISOString();
+  const tables = cloneTables(state.tables);
+  return {
+    id: createId(),
+    name: options.name || defaultReportName(createdAt),
+    createdAt,
+    status,
+    totals: calculateTotalsForTables(tables),
+    tables,
+    report: { ...state.report }
+  };
+}
+
+function cloneTables(tables) {
+  const clone = {};
+  CURRENCIES.forEach((currency) => {
+    clone[currency.id] = {
+      collapsed: Boolean(tables?.[currency.id]?.collapsed),
+      rows: (tables?.[currency.id]?.rows || []).map((row) => ({
+        id: String(row.id || createId()),
+        name: String(row.name ?? ""),
+        amount: String(row.amount ?? "")
+      }))
+    };
+  });
+  return clone;
+}
+
+function calculateTotalsForTables(tables) {
+  return Object.fromEntries(CURRENCIES.map((currency) => [
+    currency.id,
+    calculateTableTotal(tables?.[currency.id])
+  ]));
+}
+
+function calculateTableTotal(table) {
+  return (table?.rows || []).reduce((sum, row) => sum + parseAmount(row.amount), 0);
+}
+
+function defaultReportName(value = new Date().toISOString()) {
+  const date = new Date(value);
+  const prefix = getText().reportName;
+  if (Number.isNaN(date.getTime())) return prefix;
+  return `${prefix} ${date.toLocaleDateString(state.prefs.language === "zh" ? "zh-CN" : "en-US", { month: "short", day: "numeric" })}`;
+}
+
+function statusLabel(status) {
+  const t = getText();
+  const labels = {
+    saved: t.statusSaved,
+    telegram: t.statusTelegram,
+    image: t.statusImage,
+    draft: t.statusDraft
+  };
+  return labels[status] || t.statusDraft;
+}
+
+function countHistoryThisWeek(items) {
+  const now = new Date();
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - start.getDay());
+  return items.filter((item) => new Date(item.createdAt) >= start).length;
+}
+
 function updateTotals() {
   CURRENCIES.forEach((currency) => {
     const total = calculateTotal(currency.id);
@@ -662,7 +1002,7 @@ function updateTotals() {
 }
 
 function calculateTotal(currencyId) {
-  return state.tables[currencyId].rows.reduce((sum, row) => sum + parseAmount(row.amount), 0);
+  return calculateTableTotal(state.tables[currencyId]);
 }
 
 function parseAmount(raw) {
@@ -766,8 +1106,11 @@ async function saveReportImage() {
     link.remove();
     URL.revokeObjectURL(url);
     state.report.lastImageAt = new Date().toISOString();
+    const snapshot = createHistorySnapshot("image", { createdAt: state.report.lastImageAt });
+    state.history = [snapshot, ...(state.history || [])].slice(0, HISTORY_LIMIT);
+    selectedHistoryId = snapshot.id;
     persist(true);
-    renderStaticText();
+    renderAll();
     showToast(getText().imageSaved);
   } catch (error) {
     showToast(getText().imageFailed);
@@ -898,7 +1241,11 @@ async function sendToTelegram() {
   const url = `https://t.me/share/url?url=${encodeURIComponent(location.href)}&text=${encodeURIComponent(report)}`;
   const opened = window.open(url, "_blank", "noopener,noreferrer");
   state.report.lastTelegramAt = new Date().toISOString();
+  const snapshot = createHistorySnapshot("telegram", { createdAt: state.report.lastTelegramAt });
+  state.history = [snapshot, ...(state.history || [])].slice(0, HISTORY_LIMIT);
+  selectedHistoryId = snapshot.id;
   persist(true);
+  renderHistory();
   if (opened) {
     showToast(getText().telegramOpened);
     return;
@@ -928,6 +1275,80 @@ function buildTextReport() {
     lines.push("");
   });
   return lines.join("\n").trim();
+}
+
+function buildTextReportFromSnapshot(item) {
+  const t = getText();
+  const lang = state.prefs.language;
+  const lines = [
+    `${item.name}`,
+    `${t.reportDate}: ${formatDateTime(item.createdAt)}`,
+    ""
+  ];
+  CURRENCIES.forEach((currency) => {
+    lines.push(`${currency.names[lang]} - ${t.total}: ${formatCurrency(item.totals?.[currency.id] || 0, currency)}`);
+    (item.tables?.[currency.id]?.rows || []).forEach((row, index) => {
+      if (!row.name && !row.amount) return;
+      lines.push(`${index + 1}. ${row.name || "-"}: ${row.amount || "0"}`);
+    });
+    lines.push("");
+  });
+  return lines.join("\n").trim();
+}
+
+async function sendHistoryToTelegram(item) {
+  const report = buildTextReportFromSnapshot(item);
+  const url = `https://t.me/share/url?url=${encodeURIComponent(location.href)}&text=${encodeURIComponent(report)}`;
+  const opened = window.open(url, "_blank", "noopener,noreferrer");
+  item.status = "telegram";
+  persist(true);
+  renderHistory();
+  if (opened) {
+    showToast(getText().telegramOpened);
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(report);
+    showToast(getText().copiedReport);
+  } catch (error) {
+    showToast(getText().copyFailed);
+  }
+}
+
+function duplicateHistoryItem(item) {
+  const clone = {
+    ...item,
+    id: createId(),
+    name: `${item.name} Copy`,
+    createdAt: new Date().toISOString(),
+    status: "saved",
+    tables: cloneTables(item.tables),
+    totals: { ...item.totals },
+    report: { ...(item.report || {}) }
+  };
+  state.history = [clone, ...(state.history || [])].slice(0, HISTORY_LIMIT);
+  selectedHistoryId = clone.id;
+  persist(true);
+  renderHistory();
+  showToast(getText().duplicated);
+}
+
+function restoreHistoryItem(item) {
+  if (!window.confirm(getText().restoreConfirm)) return;
+  state.tables = cloneTables(item.tables);
+  persist(true);
+  renderAll();
+  setView("home");
+  showToast(getText().restored);
+}
+
+function deleteHistoryItem(item) {
+  if (!window.confirm(getText().deleteHistoryConfirm)) return;
+  state.history = (state.history || []).filter((snapshot) => snapshot.id !== item.id);
+  selectedHistoryId = state.history[0]?.id || null;
+  persist(true);
+  renderHistory();
+  showToast(getText().historyDeleted);
 }
 
 function exportData() {
@@ -1125,16 +1546,42 @@ function sanitizeState(input) {
       }))
     };
   });
+  const history = Array.isArray(input?.history)
+    ? input.history
+      .map(sanitizeHistoryItem)
+      .filter(Boolean)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, HISTORY_LIMIT)
+    : [];
 
   return {
     version: 1,
     prefs,
     tables,
+    history,
     report: {
       lastImageAt: input?.report?.lastImageAt || null,
       lastTelegramAt: input?.report?.lastTelegramAt || null
     },
     updatedAt: input?.updatedAt || null
+  };
+}
+
+function sanitizeHistoryItem(item) {
+  if (!item || typeof item !== "object") return null;
+  const tables = cloneTables(item.tables);
+  const status = ["saved", "telegram", "image", "draft"].includes(item.status) ? item.status : "draft";
+  return {
+    id: String(item.id || createId()),
+    name: String(item.name || TEXT.en.reportName),
+    createdAt: item.createdAt || new Date().toISOString(),
+    status,
+    totals: calculateTotalsForTables(tables),
+    tables,
+    report: {
+      lastImageAt: item.report?.lastImageAt || null,
+      lastTelegramAt: item.report?.lastTelegramAt || null
+    }
   };
 }
 
@@ -1162,6 +1609,7 @@ function defaultState() {
         rows: [createRow("", ""), createRow("", "")]
       }
     },
+    history: [],
     report: {
       lastImageAt: null,
       lastTelegramAt: null
@@ -1195,6 +1643,18 @@ function formatDateTime(value) {
     month: "short",
     day: "numeric",
     year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
+}
+
+function formatShortDateTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  const locale = state.prefs.language === "zh" ? "zh-CN" : "en-US";
+  return new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "numeric",
     hour: "2-digit",
     minute: "2-digit"
   }).format(date);

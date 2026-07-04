@@ -32,6 +32,9 @@
     <symbol id="icon-globe" viewBox="0 0 24 24">
       <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2.2c1.2 1.3 2 2.8 2.3 4.5H9.7c.3-1.7 1.1-3.2 2.3-4.5ZM4.4 13.1a8.3 8.3 0 0 1 0-2.2h3.1a13 13 0 0 0 0 2.2H4.4Zm1 2.2h2.5a12 12 0 0 0 1.3 3.4 7.8 7.8 0 0 1-3.8-3.4Zm2.5-6.6H5.4a7.8 7.8 0 0 1 3.8-3.4 12 12 0 0 0-1.3 3.4Zm4.1 11.1a9.8 9.8 0 0 1-2.3-4.5h4.6a9.8 9.8 0 0 1-2.3 4.5Zm2.7-6.7H9.3a10.6 10.6 0 0 1 0-2.2h5.4a10.6 10.6 0 0 1 0 2.2Zm.1 5.6a12 12 0 0 0 1.3-3.4h2.5a7.8 7.8 0 0 1-3.8 3.4Zm1.7-5.6a13 13 0 0 0 0-2.2h3.1a8.3 8.3 0 0 1 0 2.2h-3.1Zm-.4-4.4a12 12 0 0 0-1.3-3.4 7.8 7.8 0 0 1 3.8 3.4h-2.5Z" />
     </symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24">
+      <path d="M10.5 4a6.5 6.5 0 1 0 4.1 11.5l4 4 1.4-1.4-4-4A6.5 6.5 0 0 0 10.5 4Zm0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z" />
+    </symbol>
     <symbol id="icon-image" viewBox="0 0 24 24">
       <path d="M4 4h16v16H4V4Zm2 2v9.2l3.2-3.2 3.1 3.1 2.4-2.4L18 16V6H6Zm2.5 4.4a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6Z" />
     </symbol>
@@ -107,10 +110,16 @@
             <strong id="reportStatusTitle">No report image saved yet</strong>
             <span id="reportStatusCopy">Save an image for Telegram or backup.</span>
           </div>
-          <button id="saveImageButton" class="outline-action accent-orange" type="button">
-            <svg aria-hidden="true"><use href="#icon-image"></use></svg>
-            <span id="saveImageLabel">Save Image</span>
-          </button>
+          <div class="status-actions">
+            <button id="saveSnapshotButton" class="outline-action accent-blue" type="button">
+              <svg aria-hidden="true"><use href="#icon-clock"></use></svg>
+              <span id="saveSnapshotLabel">Save Snapshot</span>
+            </button>
+            <button id="saveImageButton" class="outline-action accent-orange" type="button">
+              <svg aria-hidden="true"><use href="#icon-image"></use></svg>
+              <span id="saveImageLabel">Save Image</span>
+            </button>
+          </div>
         </section>
 
         <section class="summary-block" aria-labelledby="summaryTitle">
@@ -141,6 +150,56 @@
             </span>
             <svg class="trail" aria-hidden="true"><use href="#icon-chevron"></use></svg>
           </button>
+        </section>
+      </section>
+
+      <section id="historyView" class="view" aria-labelledby="screenTitle">
+        <section class="history-overview" aria-label="History summary">
+          <article>
+            <span class="history-stat-icon accent-blue"><svg aria-hidden="true"><use href="#icon-database"></use></svg></span>
+            <div>
+              <strong id="historyTotalReports">0</strong>
+              <small id="historyTotalReportsLabel">Total Reports</small>
+            </div>
+          </article>
+          <article>
+            <span class="history-stat-icon accent-orange"><svg aria-hidden="true"><use href="#icon-clock"></use></svg></span>
+            <div>
+              <strong id="historyThisWeek">0</strong>
+              <small id="historyThisWeekLabel">This Week</small>
+            </div>
+          </article>
+          <article>
+            <span class="history-stat-icon accent-green"><svg aria-hidden="true"><use href="#icon-image"></use></svg></span>
+            <div>
+              <strong id="historyLastSaved">-</strong>
+              <small id="historyLastSavedLabel">Last Saved</small>
+            </div>
+          </article>
+        </section>
+
+        <section class="history-tools" aria-label="History tools">
+          <label class="history-search">
+            <svg aria-hidden="true"><use href="#icon-search"></use></svg>
+            <input id="historySearch" type="search" autocomplete="off" placeholder="Search report name..." />
+          </label>
+          <select id="historyStatusFilter" class="history-select" aria-label="Filter history status">
+            <option value="all">All status</option>
+            <option value="saved">Saved</option>
+            <option value="telegram">Sent to Telegram</option>
+            <option value="image">Saved Image</option>
+            <option value="draft">Draft</option>
+          </select>
+          <select id="historySort" class="history-select" aria-label="Sort history">
+            <option value="latest">Latest</option>
+            <option value="oldest">Oldest</option>
+            <option value="highest-idr">Highest IDR</option>
+          </select>
+        </section>
+
+        <section class="history-layout">
+          <div id="historyList" class="history-list" aria-live="polite"></div>
+          <aside id="historyPreview" class="history-preview" aria-live="polite"></aside>
         </section>
       </section>
 
@@ -239,6 +298,10 @@
     <button class="nav-button is-active" type="button" data-view="home">
       <svg aria-hidden="true"><use href="#icon-home"></use></svg>
       <span id="navHome">Home</span>
+    </button>
+    <button class="nav-button" type="button" data-view="history">
+      <svg aria-hidden="true"><use href="#icon-clock"></use></svg>
+      <span id="navHistory">History</span>
     </button>
     <button class="nav-button" type="button" data-view="settings">
       <svg aria-hidden="true"><use href="#icon-settings"></use></svg>

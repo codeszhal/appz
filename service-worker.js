@@ -1,4 +1,4 @@
-const CACHE_NAME = "currency-total-v3-language-label-20260704";
+const CACHE_NAME = "currency-total-v4-history-20260705";
 const APP_ASSETS = [
   "./",
   "./index.html",
