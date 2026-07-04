@@ -62,8 +62,17 @@
     <symbol id="icon-reset" viewBox="0 0 24 24">
       <path d="M5.4 6.4A8.5 8.5 0 1 1 4 12H2l3-4.8L8 12H6a6.5 6.5 0 1 0 1.9-4.6L6.5 6l-1.1.4Z" />
     </symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24">
+      <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4 6.4 5Z" />
+    </symbol>
     <symbol id="icon-database" viewBox="0 0 24 24">
       <path d="M12 3c5 0 8 1.5 8 3.5v11c0 2-3 3.5-8 3.5s-8-1.5-8-3.5v-11C4 4.5 7 3 12 3Zm0 2c-3.8 0-6 1-6 1.5S8.2 8 12 8s6-1 6-1.5S15.8 5 12 5Zm6 4.2c-1.4.8-3.5 1.3-6 1.3s-4.6-.5-6-1.3v3.3c0 .5 2.2 1.5 6 1.5s6-1 6-1.5V9.2Zm0 6c-1.4.8-3.5 1.3-6 1.3s-4.6-.5-6-1.3v2.3c0 .5 2.2 1.5 6 1.5s6-1 6-1.5v-2.3Z" />
+    </symbol>
+    <symbol id="icon-copy" viewBox="0 0 24 24">
+      <path d="M8 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Zm0 2v10h10V9H8ZM4 3h10v2H5v9H3V5a2 2 0 0 1 2-2Z" />
+    </symbol>
+    <symbol id="icon-qr" viewBox="0 0 24 24">
+      <path d="M4 4h7v7H4V4Zm2 2v3h3V6H6Zm7-2h7v7h-7V4Zm2 2v3h3V6h-3ZM4 13h7v7H4v-7Zm2 2v3h3v-3H6Zm8-2h2v2h-2v-2Zm4 0h2v3h-2v-3Zm-4 4h2v3h-2v-3Zm3 1h3v2h-3v-2Z" />
     </symbol>
   </svg>
 
@@ -206,6 +215,14 @@
             </span>
           </button>
 
+          <button id="transferButton" class="setting-row action-row" type="button">
+            <span class="setting-icon accent-blue" aria-hidden="true"><svg><use href="#icon-qr"></use></svg></span>
+            <span class="setting-copy">
+              <strong id="settingTransferTitle">Transfer to new device</strong>
+              <small id="settingTransferCopy">Copy or import a migration code.</small>
+            </span>
+          </button>
+
           <button id="resetButton" class="setting-row action-row danger-row" type="button">
             <span class="setting-icon danger-icon" aria-hidden="true"><svg><use href="#icon-reset"></use></svg></span>
             <span class="setting-copy">
@@ -235,6 +252,44 @@
       <span>Delete Row</span>
     </button>
   </div>
+
+  <dialog id="transferDialog" class="transfer-dialog">
+    <section class="transfer-panel" aria-labelledby="transferDialogTitle">
+      <header>
+        <div>
+          <h2 id="transferDialogTitle">Transfer to new device</h2>
+          <p id="transferDialogSubtitle">Move this device data with a migration code</p>
+        </div>
+        <button id="closeTransferDialog" class="modal-close" type="button" aria-label="Close">
+          <svg aria-hidden="true"><use href="#icon-close"></use></svg>
+        </button>
+      </header>
+
+      <div class="transfer-grid">
+        <section class="transfer-box">
+          <strong id="transferOldTitle">Old device: create code</strong>
+          <p id="transferOldCopy">Copy this code and paste it on the new device.</p>
+          <textarea id="transferCodeOutput" readonly spellcheck="false"></textarea>
+          <button id="copyTransferCodeButton" class="transfer-primary" type="button">
+            <svg aria-hidden="true"><use href="#icon-copy"></use></svg>
+            <span id="transferCopyButtonLabel">Copy code</span>
+          </button>
+        </section>
+
+        <section class="transfer-box">
+          <strong id="transferNewTitle">New device: import code</strong>
+          <p id="transferNewCopy">Paste the code from the old device, then import.</p>
+          <textarea id="transferCodeInput" spellcheck="false" placeholder="Paste migration code"></textarea>
+          <button id="importTransferCodeButton" class="transfer-secondary" type="button">
+            <svg aria-hidden="true"><use href="#icon-upload"></use></svg>
+            <span id="transferImportButtonLabel">Import to this device</span>
+          </button>
+        </section>
+      </div>
+
+      <p id="transferStatus" class="transfer-status">The migration code includes records and preferences. Share it only with devices you trust.</p>
+    </section>
+  </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <input id="importFile" type="file" accept="application/json" hidden />

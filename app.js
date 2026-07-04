@@ -98,11 +98,27 @@ const TEXT = {
     exportDataCopy: "Download a JSON backup.",
     importData: "Import data",
     importDataCopy: "Restore from a JSON backup.",
+    transferData: "Transfer to new device",
+    transferDataCopy: "Copy or import a migration code.",
     resetData: "Reset local data",
     resetDataCopy: "Clear records stored in this browser.",
     exportDone: "Data exported",
     importDone: "Data imported",
     importFailed: "Import failed",
+    transferTitle: "Transfer to new device",
+    transferSubtitle: "Move this device data with a migration code",
+    transferOldTitle: "Old device: create code",
+    transferOldCopy: "Copy this code and paste it on the new device.",
+    transferNewTitle: "New device: import code",
+    transferNewCopy: "Paste the code from the old device, then import.",
+    transferPlaceholder: "Paste migration code",
+    transferCopyButton: "Copy code",
+    transferImportButton: "Import to this device",
+    transferStatusDefault: "The migration code includes records and preferences. Share it only with devices you trust.",
+    transferCopied: "Migration code copied.",
+    transferCopyFailed: "Copy failed. Select and copy the code manually.",
+    transferImportSuccess: "Import complete. This device now uses the migrated data.",
+    transferImportFailed: "Invalid migration code.",
     resetConfirm: "Reset all local records on this device?",
     resetDone: "Local data reset",
     savedPaused: "Auto-save off",
@@ -159,11 +175,27 @@ const TEXT = {
     exportDataCopy: "下载 JSON 备份文件。",
     importData: "导入数据",
     importDataCopy: "从 JSON 备份恢复。",
+    transferData: "转移到新设备",
+    transferDataCopy: "复制或导入迁移码。",
     resetData: "重置本地数据",
     resetDataCopy: "清除当前浏览器中的记录。",
     exportDone: "数据已导出",
     importDone: "数据已导入",
     importFailed: "导入失败",
+    transferTitle: "转移到新设备",
+    transferSubtitle: "用迁移码把当前设备数据复制到另一台设备",
+    transferOldTitle: "旧设备：生成迁移码",
+    transferOldCopy: "复制此代码，然后在新设备中粘贴。",
+    transferNewTitle: "新设备：导入迁移码",
+    transferNewCopy: "粘贴旧设备生成的代码，然后导入。",
+    transferPlaceholder: "粘贴迁移码",
+    transferCopyButton: "复制迁移码",
+    transferImportButton: "导入到此设备",
+    transferStatusDefault: "迁移码包含记录和偏好设置。请只发送给你信任的设备。",
+    transferCopied: "迁移码已复制。",
+    transferCopyFailed: "复制失败，请手动选择并复制代码。",
+    transferImportSuccess: "导入完成。当前设备已使用迁移后的数据。",
+    transferImportFailed: "迁移码无效。",
     resetConfirm: "确定要清除当前设备上的所有本地记录吗？",
     resetDone: "本地数据已重置",
     savedPaused: "自动保存已关闭",
@@ -215,6 +247,8 @@ const elements = {
   settingExportCopy: $("settingExportCopy"),
   settingImportTitle: $("settingImportTitle"),
   settingImportCopy: $("settingImportCopy"),
+  settingTransferTitle: $("settingTransferTitle"),
+  settingTransferCopy: $("settingTransferCopy"),
   settingResetTitle: $("settingResetTitle"),
   settingResetCopy: $("settingResetCopy"),
   numberFormat: $("numberFormat"),
@@ -222,6 +256,22 @@ const elements = {
   exportButton: $("exportButton"),
   importButton: $("importButton"),
   importFile: $("importFile"),
+  transferButton: $("transferButton"),
+  transferDialog: $("transferDialog"),
+  closeTransferDialog: $("closeTransferDialog"),
+  transferDialogTitle: $("transferDialogTitle"),
+  transferDialogSubtitle: $("transferDialogSubtitle"),
+  transferOldTitle: $("transferOldTitle"),
+  transferOldCopy: $("transferOldCopy"),
+  transferNewTitle: $("transferNewTitle"),
+  transferNewCopy: $("transferNewCopy"),
+  transferCodeOutput: $("transferCodeOutput"),
+  transferCodeInput: $("transferCodeInput"),
+  copyTransferCodeButton: $("copyTransferCodeButton"),
+  importTransferCodeButton: $("importTransferCodeButton"),
+  transferCopyButtonLabel: $("transferCopyButtonLabel"),
+  transferImportButtonLabel: $("transferImportButtonLabel"),
+  transferStatus: $("transferStatus"),
   resetButton: $("resetButton"),
   headerHomeButton: $("headerHomeButton"),
   navHome: $("navHome"),
@@ -322,6 +372,13 @@ function bindEvents() {
   elements.exportButton.addEventListener("click", exportData);
   elements.importButton.addEventListener("click", () => elements.importFile.click());
   elements.importFile.addEventListener("change", importData);
+  elements.transferButton.addEventListener("click", openTransferDialog);
+  elements.closeTransferDialog.addEventListener("click", closeTransferDialog);
+  elements.copyTransferCodeButton.addEventListener("click", copyTransferCode);
+  elements.importTransferCodeButton.addEventListener("click", importTransferCode);
+  elements.transferDialog.addEventListener("click", (event) => {
+    if (event.target === elements.transferDialog) closeTransferDialog();
+  });
   elements.resetButton.addEventListener("click", resetLocalData);
   window.addEventListener("beforeunload", () => persist(true));
 }
@@ -372,8 +429,22 @@ function renderStaticText() {
   elements.settingExportCopy.textContent = t.exportDataCopy;
   elements.settingImportTitle.textContent = t.importData;
   elements.settingImportCopy.textContent = t.importDataCopy;
+  elements.settingTransferTitle.textContent = t.transferData;
+  elements.settingTransferCopy.textContent = t.transferDataCopy;
   elements.settingResetTitle.textContent = t.resetData;
   elements.settingResetCopy.textContent = t.resetDataCopy;
+  elements.transferDialogTitle.textContent = t.transferTitle;
+  elements.transferDialogSubtitle.textContent = t.transferSubtitle;
+  elements.transferOldTitle.textContent = t.transferOldTitle;
+  elements.transferOldCopy.textContent = t.transferOldCopy;
+  elements.transferNewTitle.textContent = t.transferNewTitle;
+  elements.transferNewCopy.textContent = t.transferNewCopy;
+  elements.transferCodeInput.placeholder = t.transferPlaceholder;
+  elements.transferCopyButtonLabel.textContent = t.transferCopyButton;
+  elements.transferImportButtonLabel.textContent = t.transferImportButton;
+  if (!elements.transferStatus.classList.contains("success") && !elements.transferStatus.classList.contains("error")) {
+    elements.transferStatus.textContent = t.transferStatusDefault;
+  }
   elements.navHome.textContent = t.home;
   elements.navSettings.textContent = t.settings;
   elements.deleteRowButton.querySelector("span").textContent = t.deleteRow;
@@ -896,6 +967,102 @@ function importData(event) {
     elements.importFile.value = "";
   });
   reader.readAsText(file);
+}
+
+function openTransferDialog() {
+  refreshTransferCode();
+  elements.transferCodeInput.value = "";
+  setTransferStatus("neutral", getText().transferStatusDefault);
+  if (typeof elements.transferDialog.showModal === "function") {
+    elements.transferDialog.showModal();
+  } else {
+    elements.transferDialog.setAttribute("open", "");
+  }
+}
+
+function closeTransferDialog() {
+  if (typeof elements.transferDialog.close === "function") {
+    elements.transferDialog.close();
+  } else {
+    elements.transferDialog.removeAttribute("open");
+  }
+}
+
+function refreshTransferCode() {
+  elements.transferCodeOutput.value = encodeTransferPayload();
+}
+
+function encodeTransferPayload() {
+  const payload = {
+    app: "currency-total",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    state: sanitizeState(state)
+  };
+  return bytesToBase64(new TextEncoder().encode(JSON.stringify(payload)));
+}
+
+function decodeTransferPayload(code) {
+  const cleaned = String(code || "").trim();
+  if (!cleaned) throw new Error("Empty migration code");
+  const payload = JSON.parse(new TextDecoder().decode(base64ToBytes(cleaned)));
+  if (payload?.app !== "currency-total" || !payload?.state) {
+    throw new Error("Invalid migration code");
+  }
+  return sanitizeState(payload.state);
+}
+
+async function copyTransferCode() {
+  try {
+    refreshTransferCode();
+    await copyTextToClipboard(elements.transferCodeOutput.value, elements.transferCodeOutput);
+    setTransferStatus("success", getText().transferCopied);
+  } catch (error) {
+    setTransferStatus("error", getText().transferCopyFailed);
+  }
+}
+
+function importTransferCode() {
+  try {
+    state = decodeTransferPayload(elements.transferCodeInput.value);
+    persist(true);
+    applyTheme();
+    renderAll();
+    setTransferStatus("success", getText().transferImportSuccess);
+    showToast(getText().transferImportSuccess);
+  } catch (error) {
+    setTransferStatus("error", getText().transferImportFailed);
+  }
+}
+
+async function copyTextToClipboard(text, fallbackElement) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  fallbackElement.focus();
+  fallbackElement.select();
+  document.execCommand("copy");
+}
+
+function setTransferStatus(type, message) {
+  elements.transferStatus.className = type === "neutral" ? "transfer-status" : `transfer-status ${type}`;
+  elements.transferStatus.textContent = message;
+}
+
+function bytesToBase64(bytes) {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function base64ToBytes(value) {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/").replace(/\s+/g, "");
+  const binary = atob(normalized);
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
 }
 
 function resetLocalData() {
